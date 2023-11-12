@@ -7935,14 +7935,12 @@ function config (name) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],34:[function(require,module,exports){
-
 let Peer = require('simple-peer')
 //  connect with the host
 let socket =  io()
 const video = document.querySelector('video')
 // client 
 let client = {}
-
 // get the stream 
 // if the user gave the permission 
 navigator.mediaDevices.getDisplayMedia()
@@ -7951,8 +7949,8 @@ navigator.mediaDevices.getDisplayMedia()
         socket.emit('NewClient')
         // display the users video for himself
         video.srcObject = stream
-        video.play()
 
+        video.play()
 
     //  define a new peer and return it
     function InitPeer(type){
@@ -7974,8 +7972,6 @@ navigator.mediaDevices.getDisplayMedia()
         // return what ever the peer is
     return peer
     }
-
-
     // create peer of type init that send offer
     function MakePeer(){
         client.gotAnswer=false
@@ -8013,8 +8009,8 @@ navigator.mediaDevices.getDisplayMedia()
         video.srcObject = stream
         document.querySelector('#peerDiv').appendChild(video)
         video.play()
-
     }
+    
 
 // if there is an already existi recording session
     function SessionActive(){
@@ -8028,11 +8024,12 @@ navigator.mediaDevices.getDisplayMedia()
     socket.on('BackAnswer',SignalAnswer)
     socket.on('SessionActive',SessionActive)
     socket.on('CreatePeer',MakePeer)
-   
 
 
 
 })
 .catch(err => document.write(err))
+
+
 
 },{"simple-peer":28}]},{},[34]);
