@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        video{
+            transform: rotateY(180deg);
+        }
+        #peerVideo{
+            cursor: pointer;
+            
+        }
+    </style>
+</head>
+<body>
+   <div class="container">
+    <div>
+        <!-- first video -->
+        <div>
+            <video  muted style="display: none;" ></video>
+
+        </div>
+        <!-- 2nd video  -->
+        2nd screen
+        <div id="peerDiv">
+
+        </div>
+    </div>
+   </div>
+<script src="/socket.io/socket.io.js"></script>
+    <script src="./bundle.js"></script>
+</body>
+</html>
