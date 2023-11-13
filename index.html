@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Example</title>
+    <script type="text/javascript" src="//cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script>
+        // WebSocket client code for receiving updated frames
+        document.addEventListener("DOMContentLoaded", function() {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            socket.on('new_frame', function(data) {
+                document.getElementById('latestFrame').src = 'data:image/jpeg;base64,' + data.frame;
+            });
+        });
+
+        // WebRTC and frame capture code
+        document.addEventListener("DOMContentLoaded", function() {
+            const fatma = new RTCPeerConnection();
+            const haya = new RTCPeerConnection();
+
+            fatma.onicecandidate = event => {
+                if (event.candidate) {
+                    haya.addIceCandidate(event.candidate)
+                        .catch(error => console.error("Error adding ICE candidate to Haya:", error));
+                }
+            };
+
+            haya.onicecandidate = event => {
+                if (event.candidate) {
+                    fatma.addIceCandidate(event.candidate)
+                        .catch(error => console.error("Error adding ICE candidate to Fatma:", error));
+                }
+            };
+
+            navigator.mediaDevices.getDisplayMedia({ video: { width: 1280, height: 720 } })
+                .then(stream => {
+                    stream.getTracks().forEach(track => fatma.addTrack(track, stream));
+                    return fatma.createOffer();
+                })
+                .then(offer => fatma.setLocalDescription(new RTCSessionDescription(offer)))
+                .then(() => haya.setRemoteDescription(fatma.localDescription))
+                .then(() => haya.createAnswer())
+                .then(answer => haya.setLocalDescription(new RTCSessionDescription(answer)))
+                .then(() => fatma.setRemoteDescription(haya.localDescription))
+                .catch(error => console.error("Error in promise chain:", error));
+
+            haya.ontrack = event => {
+                const video = document.getElementById('remote');
+                video.srcObject = event.streams[0];
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 640;  // Reduced width
+                canvas.height = 360; // Reduced height
+                document.body.appendChild(canvas);
+                let captureInterval;
+
+                function captureFrame() {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(sendFrameToServer, 'image/jpeg',0.7);
+                }
+
+                function sendFrameToServer(blob) {
+                    const formData = new FormData();
+                    formData.append('frame', blob);
+                    fetch('http://localhost:8080/upload_frame', { 
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => console.log(data))
+                    .catch(error => console.error('Error:', error));
+                }
+
+                video.onplay = () => {
+                    captureInterval = setInterval(captureFrame, 1000);
+                };
+
+                video.onended = () => {
+                    clearInterval(captureInterval);
+                };
+            };
+        });
+    </script>
+</head>
+<body>
+    <video id="remote" autoplay style="display: none;"></video>
+    <canvas style="display: none;"></canvas> <!-- Hidden canvas for frame capture -->
+    <img id="latestFrame" alt="Latest Frame" style="max-width: 100%; height: auto;">
+</body>
+</html>
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Example</title>
+</head>
+<body>
+    <video id="remote" autoplay style="display: none;"></video>
+    <script>
+        const fatma = new RTCPeerConnection();
+        const haya = new RTCPeerConnection();
+
+        // If Fatma receives ICE candidate info, pass it to Haya
+        fatma.onicecandidate = event => {
+            if (event.candidate) {
+                haya.addIceCandidate(event.candidate)
+                    .catch(error => console.error("Error adding ICE candidate to Haya:", error));
+            }
+        };
+
+        // If Haya receives ICE candidate info, pass it to Fatma
+        haya.onicecandidate = event => {
+            if (event.candidate) {
+                fatma.addIceCandidate(event.candidate)
+                    .catch(error => console.error("Error adding ICE candidate to Fatma:", error));
+            }
+        };
+
+        // Handling local stream
+        navigator.mediaDevices.getDisplayMedia({ video: { width: 1280, height: 720 } })
+            .then(stream => {
+                // document.getElementById('local').srcObject = stream;
+                stream.getTracks().forEach(track => fatma.addTrack(track, stream));
+                return fatma.createOffer();
+            })
+            .then(offer => fatma.setLocalDescription(new RTCSessionDescription(offer)))
+            .then(() => haya.setRemoteDescription(fatma.localDescription))
+            .then(() => haya.createAnswer())
+            .then(answer => haya.setLocalDescription(new RTCSessionDescription(answer)))
+            .then(() => fatma.setRemoteDescription(haya.localDescription))
+            .catch(error => console.error("Error in promise chain:", error));
+
+  // Handling remote stream and setup for frame capture
+  haya.ontrack = event => {
+            const video = document.getElementById('remote');
+            video.srcObject = event.streams[0];
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            document.body.appendChild(canvas); // Optional: append the canvas to the body if you want to see it
+
+            let captureInterval;
+
+            function captureFrame() {
+                canvas.width = video.videoWidth; // Set canvas size to video frame size
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(sendFrameToServer, 'image/jpeg'); // converting the canvas to a Blob
+                document.getElementById('frame').src = canvas.toDataURL('image/jpeg', 1.0); // 1.0 is the highest quali
+            }
+            function sendFrameToServer(blob) {
+                const formData = new FormData();
+                formData.append('frame', blob);
+                fetch('http://localhost:8080/upload_frame', { 
+                method: 'POST',
+               body: formData
+                })
+             .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+            }
+
+            video.onplay = () => {
+                // Set an interval to capture frames every second
+                captureInterval = setInterval(captureFrame, 500);
+            };
+
+            video.onended = () => {
+                // Clear the interval when the stream ends
+                clearInterval(captureInterval);
+            };
+        };
+    </script>
+</body>
+</html> -->

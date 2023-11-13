@@ -1,65 +1,57 @@
-const express = require('express')
-const app = express()
-// http server
-const http = require('http').Server(app)
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const webrtc = require("wrtc");
 
-//  create an instance for socket.io
-const io = require('socket.io')(http)
+let senderStream;
 
-//  our port 
-const port = process.env.PORT || 3000
+app.use(express.static('public'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// load static files
-app.use(express.static(__dirname + "/public"))
-// at the beggining there are not clients
-let clients = 0 
-// what should happen once the connection is made
-io.on('connection',function(socket){
-    socket.on('NewClient',function(){
-        if(clients<2){
-            if(clients==1){
-                //  this will send a signal for other client
-                this.emit('CreatePeer') 
+app.post("/consumer", async ({ body }, res) => {
+    const peer = new webrtc.RTCPeerConnection({
+        iceServers: [
+            {
+                urls: "stun:stun.stunprotocol.org"
             }
-        }
-        else
-        // more than 2 clients ( 2)
-            this.emit('SessionActive')
-            
-        clients++
-    })
-    // an offer is coming from the front end
-    socket.on('Offer',SendOffer)
-    // an answer is coming from the front end
-    socket.on('Answer',SendAnswer)
-    // if we closed the browser window call the disconnect function
-    socket.on('disconnect',Disconnect)
-
-})
-
-function Disconnect(){
-    if(clients>0){
-        clients--
+        ]
+    });
+    const desc = new webrtc.RTCSessionDescription(body.sdp);
+    await peer.setRemoteDescription(desc);
+    senderStream.getTracks().forEach(track => peer.addTrack(track, senderStream));
+    const answer = await peer.createAnswer();
+    await peer.setLocalDescription(answer);
+    const payload = {
+        sdp: peer.localDescription
     }
-}
 
+    res.json(payload);
+});
 
-// function SendOffer(offer){
-//     //  send the offer to the other user
-//     if (socket.initiator) {
-//     this.broadcast.emit('BackOffer',offer)}
-// }
-function SendOffer(offer, socket) {
-    // If the client is not the initiator, send the offer to them
-    if (!socket.initiator) {
-        this.to(socket.id).emit('BackOffer', offer);
+app.post('/broadcast', async ({ body }, res) => {
+    const peer = new webrtc.RTCPeerConnection({
+        iceServers: [
+            {
+                urls: "stun:stun.stunprotocol.org"
+            }
+        ]
+    });
+    peer.ontrack = (e) => handleTrackEvent(e, peer);
+    const desc = new webrtc.RTCSessionDescription(body.sdp);
+    await peer.setRemoteDescription(desc);
+    const answer = await peer.createAnswer();
+    await peer.setLocalDescription(answer);
+    const payload = {
+        sdp: peer.localDescription
     }
-}
 
-function SendAnswer(data){
-    //  send the answer to the other user
-    this.broadcast.emit('BackAnswer',data)
-}
+    res.json(payload);
+});
+
+function handleTrackEvent(e, peer) {
+    senderStream = e.streams[0];
+};
 
 
-http.listen(port, ()=> console.log(`Active on ${port} port`))
+app.listen(5000, () => console.log('server started'));
