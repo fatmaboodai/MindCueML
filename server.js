@@ -9,7 +9,6 @@ const io = require('socket.io')(http)
 //  our port 
 const port = process.env.PORT || 3000
 
-
 // load static files
 app.use(express.static(__dirname + "/public"))
 // at the beggining there are not clients
@@ -20,12 +19,13 @@ io.on('connection',function(socket){
         if(clients<2){
             if(clients==1){
                 //  this will send a signal for other client
-                this.emit('CreatePeer')
+                this.emit('CreatePeer') 
             }
         }
         else
         // more than 2 clients ( 2)
             this.emit('SessionActive')
+            
         clients++
     })
     // an offer is coming from the front end
@@ -37,7 +37,6 @@ io.on('connection',function(socket){
 
 })
 
-
 function Disconnect(){
     if(clients>0){
         clients--
@@ -45,11 +44,17 @@ function Disconnect(){
 }
 
 
-function SendOffer(offer){
-    //  send the offer to the other user
-    this.broadcast.emit('BackOffer',offer)
+// function SendOffer(offer){
+//     //  send the offer to the other user
+//     if (socket.initiator) {
+//     this.broadcast.emit('BackOffer',offer)}
+// }
+function SendOffer(offer, socket) {
+    // If the client is not the initiator, send the offer to them
+    if (!socket.initiator) {
+        this.to(socket.id).emit('BackOffer', offer);
+    }
 }
-
 
 function SendAnswer(data){
     //  send the answer to the other user
