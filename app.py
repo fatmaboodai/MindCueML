@@ -5,17 +5,14 @@ from io import BytesIO
 from time import time
 from ultralytics import YOLO
 import pandas
-
 app = Flask(__name__)
 model = YOLO('yolov8n.onnx')
-
 latest_frame = None
 latest_frame_timestamp = 0  # Timestamp to track the latest frame update
 @app.route('/upload_frame', methods=['POST'])
 def upload_frame():
     global latest_frame, latest_frame_timestamp
     frame = request.files['frame']
-    
     # Process the frame with YOLO model
     try:
         with Image.open(frame.stream) as img:
@@ -30,10 +27,10 @@ def upload_frame():
             
             # Process results here as needed, e.g., store them, send them elsewhere, etc.
     except Exception as e:
-        print(f"Error processing the image with YOLO: {e}")
+        # print(f"Error processing the image with YOLO: {e}")
         return {"error": str(e)}
 
-    # # Resize and compress the image to reduce the size
+    # Resize and compress the image to reduce the size
     # with Image.open(frame.stream) as img:
     #     buffer = BytesIO()
     #     img.save(buffer, format="JPEG", quality=70)  # Compress image
