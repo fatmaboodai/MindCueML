@@ -18,3 +18,14 @@
 # from ultralytics import YOLO
 # model = YOLO('yolov8n.pt')
 # model.export(format = "onnx")
+
+
+def normalize_path(path):
+    # Replace double backslashes with single backslashes
+    normalized_path = path.replace('\\\\', '\\')
+    return normalized_path
+
+# Example usage:
+original_path = "C:\\Users\\mega\\AppData\\Local\\Temp\\tmpm98cuq4q.jpg"
+normalized_path = normalize_path(original_path)
+print(normalized_path)

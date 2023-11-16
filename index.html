@@ -31,7 +31,7 @@
                 }
             };
 
-            navigator.mediaDevices.getDisplayMedia({ video: { width: 1280, height: 720 } })
+            navigator.mediaDevices.getDisplayMedia()
                 .then(stream => {
                     stream.getTracks().forEach(track => fatma.addTrack(track, stream));
                     return fatma.createOffer();
@@ -49,16 +49,14 @@
 
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
-                canvas.width = 640;  // Reduced width
-                canvas.height = 360; // Reduced height
                 document.body.appendChild(canvas);
                 let captureInterval;
 
                 function captureFrame() {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(sendFrameToServer, 0.95);
+                    canvas.toBlob(sendFrameToServer, 'image/jpg', 1);
                 }
 
                 function sendFrameToServer(blob) {
