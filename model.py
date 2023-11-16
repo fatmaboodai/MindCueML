@@ -13,6 +13,8 @@
 #     model_id="combo-dataset/3"
 # )
 # print(model.infer(image =img_url))
-from ultralytics import YOLO
-model = YOLO('yolov8n.pt')
-model.export(format = "onnx")
+
+
+# from ultralytics import YOLO
+# model = YOLO('yolov8n.pt')
+# model.export(format = "onnx")
