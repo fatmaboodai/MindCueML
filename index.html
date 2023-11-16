@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebRTC Example</title>
     <script src="https://cdn.roboflow.com/0.2.26/roboflow.js"></script>
-    <script type="text/javascript" src="//cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script>
         // WebSocket client code for receiving updated frames
         document.addEventListener("DOMContentLoaded", function() {
@@ -53,10 +53,10 @@
                 let captureInterval;
 
                 function captureFrame() {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(sendFrameToServer, 'image/jpg', 0.95);
+                    canvas.toBlob(sendFrameToServer, 'image/jpg', 0.1);
                 }
 
                 function sendFrameToServer(blob) {
