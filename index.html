@@ -7,9 +7,10 @@
     <script src="https://cdn.roboflow.com/0.2.26/roboflow.js"></script>
     <script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script>
+        let socket
         // WebSocket client code for receiving updated frames
         document.addEventListener("DOMContentLoaded", function() {
-            const socket = io.connect('http://' + document.domain + ':' + location.port);
+             socket = io.connect('http://' + document.domain + ':' + location.port);
         });
 
         // WebRTC and frame capture code
