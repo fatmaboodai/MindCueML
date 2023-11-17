@@ -26,6 +26,7 @@ def async_predict(model, img_path):
 async def upload_frame():
     frame = request.files['frame']
     image_data = frame.read()
+    print(frame)
     # Create a temporary in-memory file-like object
     with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
         temp_file.write(image_data)
