@@ -58,7 +58,7 @@
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
                     canvas.toBlob(blob => {
                         socket.emit('send_frame', blob);
-                    }, 'image/jpeg', 0.1);
+                    }, 'image/jpeg', 0.3);
                 }
 
                 video.onplay = () => {
