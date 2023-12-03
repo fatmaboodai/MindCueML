@@ -1,68 +1,68 @@
-import base64
-from io import BytesIO
-import os
-import tempfile
-from PIL import Image
-from flask import Flask, render_template
-from flask_socketio import SocketIO, emit                
-from ultralytics import YOLO
-import signal
-from roboflow import Roboflow
+# import base64
+# from io import BytesIO
+# import os
+# import tempfile
+# from PIL import Image
+# from flask import Flask, render_template
+# from flask_socketio import SocketIO, emit                
+# from ultralytics import YOLO
+# import signal
+# from roboflow import Roboflow
 
-rf = Roboflow(api_key="7Hl9FLL5IgTbW6A70Nue")
-project = rf.workspace("mindcue").project("combo-dataset")
-model = project.version(3).model
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, cors_allowed_origins="*")
-temp_image_paths=[]
-print(temp_image_paths)
+# rf = Roboflow(api_key="7Hl9FLL5IgTbW6A70Nue")
+# project = rf.workspace("mindcue").project("combo-dataset")
+# model = project.version(3).model
+# app = Flask(__name__)
+# app.config['SECRET_KEY'] = 'secret!'
+# socketio = SocketIO(app, cors_allowed_origins="*")
+# temp_image_paths=[]
+# print(temp_image_paths)
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')  # Make sure 'index.html' exists in your templates folder
+# @app.route('/')
+# def index():
+#     return render_template('index.html')  # Make sure 'index.html' exists in your templates folder
 
-@socketio.on('connect')
-def handle_connect():
-    print('Client connected')
+# @socketio.on('connect')
+# def handle_connect():
+#     print('Client connected')
 
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('Client disconnected')
+# @socketio.on('disconnect')
+# def handle_disconnect():
+#     print('Client disconnected')
 
-@socketio.on('send_frame')
-def handle_frame(data):
-    print("Frame received")
-    image_data = base64.b64decode(data.split(',')[1])
+# @socketio.on('send_frame')
+# def handle_frame(data):
+#     print("Frame received")
+#     image_data = base64.b64decode(data.split(',')[1])
 
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.jpeg') as temp_file:
-            temp_file.write(image_data)
-            temp_file.seek(0)
-            image_path = temp_file.name
-            temp_image_paths.append(image_path)
-            temp_file.close()
-            try:
-                results = model.predict(image_path)
-                p = results.json()
+#     try:
+#         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpeg') as temp_file:
+#             temp_file.write(image_data)
+#             temp_file.seek(0)
+#             image_path = temp_file.name
+#             temp_image_paths.append(image_path)
+#             temp_file.close()
+#             try:
+#                 results = model.predict(image_path)
+#                 p = results.json()
 
-                if p['predictions']:
-                    emit('predictions',p['predictions'][0])
-                    print(p['predictions'][0])
-            except Exception as e:
-                print(f"Error during prediction: {e}")
+#                 if p['predictions']:
+#                     emit('predictions',p['predictions'][0])
+#                     print(p['predictions'][0])
+#             except Exception as e:
+#                 print(f"Error during prediction: {e}")
 
-    finally:
-        # Clean up the file immediately after processing
-        try:
-            os.remove(image_path)
-            print(f"Deleted: {image_path}")
-        except Exception as e:
-            print(f"Error deleting {image_path}: {e}")
+#     finally:
+#         # Clean up the file immediately after processing
+#         try:
+#             os.remove(image_path)
+#             print(f"Deleted: {image_path}")
+#         except Exception as e:
+#             print(f"Error deleting {image_path}: {e}")
 
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=9000)
+# if __name__ == '__main__':
+#     socketio.run(app, host='0.0.0.0', port=9000)
 
 
 
@@ -127,31 +127,36 @@ if __name__ == '__main__':
 # if __name__ == '__main__':
 #     socketio.run(app, host='127.0.0.1', port=5500)
 
-# from flask import Flask
-# from flask_socketio import SocketIO
-# import base64
-# import os
-# import asyncio
-# from ultralytics import YOLO
-# model = YOLO('yolov8n.pt')
-# app = Flask(__name__)
-# socketio = SocketIO(app, cors_allowed_origins="*")
+from flask import Flask
+from flask_socketio import SocketIO
+import base64
+import os
+import asyncio
+from ultralytics import YOLO
+import base64
+import numpy as np
+from PIL import Image
+from io import BytesIO
 
-# @app.route('/')
-# def index():
-#     return "WebSocket Server"
 
-# @socketio.on('upload_frame')
-# def handle_upload_frame(data):
-#     # Convert ArrayBuffer to bytes
-#     image_data = base64.b64decode(data)
-#     print(image_data)
-#     print(model.predict(image_data))
-#     # Process the image data (e.g., save to file, run ML model, etc.)
-#     # You can use a similar approach as before for processing
+model = YOLO('yolov8n.onnx')
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-#     # Send response back to client if needed
-#     socketio.emit('response', {'message': 'Frame received'})
+@app.route('/')
+def index():
+    return "WebSocket Server"
 
-# if __name__ == '__main__':
-#     socketio.run(app, host='0.0.0.0', port=8080)
+@socketio.on('upload_frame')
+def handle_upload_frame(data):
+    # Convert ArrayBuffer to bytes
+    image_data = base64.b64decode(data)
+    image = Image.open(BytesIO(image_data))
+    # print(image_data)
+    print(model.predict(image))
+
+    # Send response back to client if needed
+    socketio.emit('predictions', {'message': 'Frame received'})
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=8080)
